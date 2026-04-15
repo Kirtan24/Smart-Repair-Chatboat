@@ -25,7 +25,7 @@ const ISSUE_EMOJI: Record<string, string> = {
 
 // Map icon names to components
 const getIssueIcon = (iconName: string) => {
-  const iconMap: Record<string, React.FC> = {
+  const iconMap: Record<string, React.FC<{ size?: number; strokeWidth?: number }>> = {
     snowflake: Snowflake,
     droplet: Droplet,
     signal: Signal,
