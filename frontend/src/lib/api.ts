@@ -1,70 +1,55 @@
+'use client';
+
 import axios from 'axios';
 
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api',
-  timeout: 60000,
   withCredentials: true,
 });
 
-// Attach JWT token to every request
+// Interceptor to handle unauthorized errors
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401 && typeof window !== 'undefined') {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      // Use window.location instead of router to force a hard refresh
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login';
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
+// Interceptor to add token to headers
 api.interceptors.request.use((config) => {
   if (typeof window !== 'undefined') {
     const token = localStorage.getItem('token');
-    if (token) config.headers.Authorization = `Bearer ${token}`;
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
   }
   return config;
 });
 
-// Handle 401 globally
-api.interceptors.response.use(
-  (res) => res,
-  (err) => {
-    if (err.response?.status === 401 && typeof window !== 'undefined') {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
-    }
-    return Promise.reject(err);
-  }
-);
-
 // ── Auth ───────────────────────────────────────────────────────────────
 export const authApi = {
-  login: (email: string, password: string) =>
+  login: (email: string, password: string) => 
     api.post('/auth/login', { email, password }),
-  register: (name: string, email: string, password: string) =>
+  register: (name: string, email: string, password: string) => 
     api.post('/auth/register', { name, email, password }),
-  me: () => api.get('/auth/me'),
   logout: () => api.post('/auth/logout'),
+  me: () => api.get('/auth/me'),
 };
 
 // ── Conversations ──────────────────────────────────────────────────────
 export const conversationsApi = {
-  list: async () => {
-    const res = await api.get('/conversations');
-    // Normalize MongoDB's _id to id
-    if (res.data.conversations) {
-      res.data.conversations = res.data.conversations.map((conv: any) => ({
-        ...conv,
-        id: conv._id,
-      }));
-    }
-    return res;
-  },
-  get: async (id: string) => {
-    const res = await api.get(`/conversations/${id}`);
-    // Normalize MongoDB's _id to id
-    if (res.data.conversation) {
-      res.data.conversation = {
-        ...res.data.conversation,
-        id: res.data.conversation._id,
-      };
-    }
-    return res;
-  },
-  create: (title?: string, issue_type?: string) =>
-    api.post('/conversations', { title, issue_type }),
-  update: (id: string, data: Record<string, string>) =>
+  list: () => api.get('/conversations'),
+  get: (id: string) => api.get(`/conversations/${id}`),
+  create: (data: any) => api.post('/conversations', data),
+  update: (id: string, data: any) => 
     api.patch(`/conversations/${id}`, data),
   delete: (id: string) => api.delete(`/conversations/${id}`),
   editMessage: (convId: string, msgId: string, content: string) =>
@@ -79,6 +64,7 @@ export const chatApi = {
     }),
   regenerate: (conversation_id: string) =>
     api.post('/chat/regenerate', { conversation_id }),
+  findTechnicians: (issue_type: string, location?: { lat: number; lng: number }) =>
     api.post('/chat/technicians', { issue_type, location }),
 };
 
@@ -87,7 +73,7 @@ export const paymentsApi = {
   getPlans: () => api.get('/payments/plans'),
   getMyPlan: () => api.get('/payments/my-plan'),
   createOrder: (planId: string, provider: string) =>
-    api.post('/create-order', { planId, provider }),
+    api.post('/payments/create-order', { planId, provider }),
   verifyStripe: (sessionId: string, planId: string) =>
     api.post('/payments/verify-stripe', { session_id: sessionId, plan_id: planId }),
   verifyRazorpay: (data: any) => api.post('/payments/verify-razorpay', data),
