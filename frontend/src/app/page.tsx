@@ -25,7 +25,7 @@ const QUICK_ACTIONS = [
 
 export default function ChatPage() {
   const router = useRouter();
-  const { user, isLoaded, loadFromStorage } = useAuthStore();
+  const { user, isLoaded } = useAuthStore();
   const {
     conversations, activeConversationId, messages, isSending,
     setConversations, setActiveConversation, setActiveConversationId, setMessages, addMessage,
@@ -44,7 +44,6 @@ export default function ChatPage() {
   const activeConv = conversations.find((c) => c.id === activeConversationId);
 
   // ── Auth guard ──────────────────────────────────────────────────────────
-  useEffect(() => { loadFromStorage(); }, []);
   useEffect(() => {
     if (isLoaded && !user) router.push('/login');
   }, [isLoaded, user]);
@@ -69,13 +68,6 @@ export default function ChatPage() {
       if (e.shiftKey && e.key === 'Escape') {
         e.preventDefault();
         chatInputRef.current?.focus();
-        return;
-      }
-
-      // ?: Show shortcuts
-      if (e.key === '?' && !e.ctrlKey && !e.metaKey) {
-        e.preventDefault();
-        setShowShortcuts(true);
         return;
       }
 

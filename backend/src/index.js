@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const cookieParser = require('cookie-parser');
 const path = require('path');
 const connectDB = require('./db/connection');
 
@@ -12,10 +13,12 @@ const PORT = process.env.PORT || 5000;
 // ── Security middleware ────────────────────────────────────────────────────
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 app.use(cors({
-  origin: '*',
+  origin: ['http://localhost:3000', 'http://127.0.0.1:3000'],
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
 }));
+app.use(cookieParser());
 
 // ── Rate limiting ──────────────────────────────────────────────────────────
 const limiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 200, standardHeaders: true });
@@ -38,6 +41,8 @@ async function initDb() {
     require('./models/Conversation');
     require('./models/Message');
     require('./models/Technician');
+    require('./models/Plan');
+    require('./models/Payment');
     
     console.log('[OK] Database models initialized');
   } catch (error) {
@@ -50,6 +55,8 @@ async function initDb() {
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/conversations', require('./routes/conversations'));
 app.use('/api/chat', require('./routes/chat'));
+app.use('/api/admin', require('./routes/admin'));
+app.use('/api/payments', require('./routes/payments'));
 
 // ── Health check ───────────────────────────────────────────────────────────
 app.get('/api/health', (req, res) => {

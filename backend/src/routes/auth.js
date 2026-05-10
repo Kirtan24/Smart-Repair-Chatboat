@@ -39,8 +39,15 @@ router.post(
 
       await user.save();
 
-      const userData = { _id: user._id, email: user.email, name: user.name };
+      const userData = { _id: user._id, email: user.email, name: user.name, role: user.role };
       const token = generateToken(userData);
+
+      res.cookie('token', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      });
 
       res.status(201).json({
         message: 'Account created successfully',
@@ -81,11 +88,18 @@ router.post(
         return res.status(401).json({ error: 'Invalid email or password' });
       }
 
-      const token = generateToken({ _id: user._id, email: user.email, name: user.name });
+      const token = generateToken({ _id: user._id, email: user.email, name: user.name, role: user.role });
+
+      res.cookie('token', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      });
 
       res.json({
         token,
-        user: { _id: user._id, email: user.email, name: user.name, avatar_url: user.avatar_url },
+        user: { _id: user._id, email: user.email, name: user.name, avatar_url: user.avatar_url, role: user.role },
       });
     } catch (err) {
       console.error('[ERROR] Login error:', err);
@@ -97,13 +111,19 @@ router.post(
 // ── Me ────────────────────────────────────────────────────────────────────────
 router.get('/me', require('../middleware/auth').authenticate, async (req, res) => {
   try {
-    const user = await User.findById(req.user._id).select('_id email name avatar_url created_at');
+    const user = await User.findById(req.user._id).select('_id email name avatar_url role created_at');
     if (!user) return res.status(404).json({ error: 'User not found' });
     res.json({ user });
   } catch (err) {
     console.error('[ERROR] Failed to fetch user:', err);
     res.status(500).json({ error: 'Failed to fetch user' });
   }
+});
+
+// ── Logout ───────────────────────────────────────────────────────────────────
+router.post('/logout', (req, res) => {
+  res.clearCookie('token');
+  res.json({ message: 'Logged out successfully' });
 });
 
 module.exports = router;

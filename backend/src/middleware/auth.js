@@ -30,13 +30,24 @@ function verifyToken(token) {
  */
 function authenticate(req, res, next) {
   try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    let token = null;
+
+    // Check cookies first
+    if (req.cookies && req.cookies.token) {
+      token = req.cookies.token;
+    } 
+    // Fallback to header
+    else if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
+      token = req.headers.authorization.split(' ')[1];
+    }
+
+    if (!token) {
+      console.warn(`[AUTH] No token found in cookies or headers for ${req.method} ${req.url}`);
       return res.status(401).json({ error: 'No token provided' });
     }
 
-    const token = authHeader.split(' ')[1];
     const decoded = verifyToken(token);
+    console.log(`[AUTH] Verified token for user: ${decoded.email}`);
     req.user = decoded;
     next();
   } catch (error) {

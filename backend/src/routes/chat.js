@@ -55,6 +55,18 @@ router.post(
     }
 
     try {
+      const User = require('../models/User');
+      const userDoc = await User.findById(req.user._id).populate('plan_id');
+      
+      let chatLimit = 5; // default free limit
+      if (userDoc.plan_id && userDoc.plan_expiry && userDoc.plan_expiry > new Date()) {
+        chatLimit = userDoc.plan_id.chat_limit;
+      }
+      
+      if (userDoc.role !== 'admin' && userDoc.chats_used >= chatLimit) {
+        return res.status(403).json({ error: `You have reached your chat limit of ${chatLimit} messages. Please upgrade your plan.` });
+      }
+
       let finalContent = content?.trim() || '';
       let imageUrl = null;
       let imageAnalysis = null;
@@ -179,6 +191,10 @@ router.post(
       // ── Update conversation timestamp ─────────────────────────────────
       conv.updated_at = Date.now();
       await conv.save();
+
+      // ── Increment user's used chats ───────────────────────────────────
+      userDoc.chats_used = (userDoc.chats_used || 0) + 1;
+      await userDoc.save();
 
       res.json({
         conversation_id: convId,

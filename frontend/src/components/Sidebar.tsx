@@ -7,6 +7,7 @@ import { useChatStore, type Conversation } from '@/store/chatStore';
 import { useAuthStore } from '@/store/authStore';
 import { conversationsApi } from '@/lib/api';
 import toast from 'react-hot-toast';
+import Link from 'next/link';
 
 const ISSUE_BADGE: Record<string, string> = {
   ac: 'badge-ac',
@@ -60,7 +61,28 @@ export default function Sidebar({ onNewChat, onSelectConv }: Props) {
   const { conversations, activeConversationId, removeConversation } = useChatStore();
   const { user, logout } = useAuthStore();
   const [openMenu, setOpenMenu] = useState<string | null>(null);
+  const [planData, setPlanData] = useState<any>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  // Fetch user plan
+  useEffect(() => {
+    const fetchPlan = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+        const res = await fetch('http://localhost:5000/api/payments/my-plan', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.plan) setPlanData(data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch plan', err);
+      }
+    };
+    fetchPlan();
+  }, []);
 
   // Close menu on outside click
   useEffect(() => {
@@ -85,9 +107,8 @@ export default function Sidebar({ onNewChat, onSelectConv }: Props) {
     }
   };
 
-  const handleLogout = () => {
-    logout();
-    window.location.href = '/login';
+  const handleLogout = async () => {
+    await logout();
   };
 
   const groups = groupByDate(conversations);
@@ -171,6 +192,33 @@ export default function Sidebar({ onNewChat, onSelectConv }: Props) {
               ))}
             </div>
           ))
+        )}
+      </div>
+
+      {/* Links */}
+      <div style={{ padding: '0 1rem 1rem' }}>
+        {planData ? (
+          <div style={{ padding: '0.875rem', background: 'var(--orange-50)', borderRadius: 'var(--radius-lg)', marginBottom: user?.role === 'admin' ? '0.5rem' : 0, border: '1px solid var(--orange-200)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--orange-700)', textTransform: 'uppercase' }}>{planData.plan.name}</span>
+              <Link href="/upgrade" style={{ fontSize: '0.7rem', color: 'var(--orange-600)', textDecoration: 'none', fontWeight: 600 }}>Manage</Link>
+            </div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.375rem' }}>
+              Queries Used: <strong style={{ color: 'var(--orange-600)' }}>{planData.chats_used} / {planData.plan.chat_limit}</strong>
+            </div>
+            <div style={{ width: '100%', height: '4px', background: 'var(--orange-200)', borderRadius: '2px', overflow: 'hidden' }}>
+              <div style={{ width: `${Math.min(100, (planData.chats_used / planData.plan.chat_limit) * 100)}%`, height: '100%', background: 'var(--orange-500)', borderRadius: '2px', transition: 'width 0.5s ease-out' }} />
+            </div>
+          </div>
+        ) : (
+          <Link href="/upgrade" style={{ display: 'block', padding: '0.75rem', background: 'linear-gradient(135deg, var(--orange-500), var(--orange-600))', color: 'white', textDecoration: 'none', borderRadius: 'var(--radius-lg)', textAlign: 'center', fontWeight: 'bold', fontSize: '0.875rem', marginBottom: user?.role === 'admin' ? '0.5rem' : 0, boxShadow: 'var(--shadow-orange)' }}>
+            Upgrade to Premium
+          </Link>
+        )}
+        {user?.role === 'admin' && (
+          <Link href="/admin" style={{ display: 'block', padding: '0.75rem', background: 'var(--gray-200)', color: 'var(--gray-800)', textDecoration: 'none', borderRadius: 'var(--radius-lg)', textAlign: 'center', fontWeight: 'bold', fontSize: '0.875rem' }}>
+            Admin Dashboard
+          </Link>
         )}
       </div>
 

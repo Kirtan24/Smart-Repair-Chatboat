@@ -3,6 +3,7 @@ import axios from 'axios';
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api',
   timeout: 60000,
+  withCredentials: true,
 });
 
 // Attach JWT token to every request
@@ -34,6 +35,7 @@ export const authApi = {
   register: (name: string, email: string, password: string) =>
     api.post('/auth/register', { name, email, password }),
   me: () => api.get('/auth/me'),
+  logout: () => api.post('/auth/logout'),
 };
 
 // ── Conversations ──────────────────────────────────────────────────────
