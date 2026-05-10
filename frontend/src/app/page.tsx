@@ -161,10 +161,16 @@ export default function ChatPage() {
       // Try geolocation (non-blocking)
       try {
         const pos = await new Promise<GeolocationPosition>((res, rej) =>
-          navigator.geolocation.getCurrentPosition(res, rej, { timeout: 3000 })
+          navigator.geolocation.getCurrentPosition(res, rej, {
+            timeout: 10000,
+            maximumAge: 60000,
+            enableHighAccuracy: false,
+          })
         );
         fd.append('location', JSON.stringify({ lat: pos.coords.latitude, lng: pos.coords.longitude }));
-      } catch { /* ignore – not required */ }
+      } catch (geoErr) {
+        console.warn('Geolocation unavailable or timed out:', geoErr);
+      }
 
       if (image) {
         fd.append('image', image);
@@ -334,7 +340,7 @@ export default function ChatPage() {
                     const isLast = idx === displayMsgs.length - 1 && msg.role === 'assistant';
                     return (
                       <MessageBubble
-                        key={msg.id}
+                        key={`${msg.id}-${idx}`}
                         message={msg}
                         userInitial={userInitial}
                         onEdit={msg.role === 'user' ? setEditingMsg : undefined}
