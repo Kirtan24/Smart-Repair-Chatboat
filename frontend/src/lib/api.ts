@@ -79,8 +79,9 @@ export const chatApi = {
     }),
   regenerate: (conversation_id: string) =>
     api.post('/chat/regenerate', { conversation_id }),
-  findTechnicians: (issue_type: string, location?: { lat: number; lng: number }) =>
     api.post('/chat/technicians', { issue_type, location }),
+};
+
 // ── Payments ────────────────────────────────────────────────────────────
 export const paymentsApi = {
   getPlans: () => api.get('/payments/plans'),
