@@ -4,6 +4,7 @@ import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuthStore } from '@/store/authStore';
+import { paymentsApi } from '@/lib/api';
 
 function SuccessContent() {
   const router = useRouter();
@@ -25,20 +26,11 @@ function SuccessContent() {
 
 
 
-  const verifyStripe = async (sessionId: string, planId: string) => {
+    const verifyStripe = async (sessionId: string, planId: string) => {
     setVerifying(true);
     try {
-      const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:5000/api/payments/verify-stripe', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({ session_id: sessionId, plan_id: planId })
-      });
-      
-      if (res.ok) {
+      const res = await paymentsApi.verifyStripe(sessionId, planId);
+      if (res.data.success) {
         setStatus('success');
       } else {
         setStatus('failed');

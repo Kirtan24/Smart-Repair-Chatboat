@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useAuthStore } from '@/store/authStore';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { adminApi } from '@/lib/api';
 import { Wrench, Users, CreditCard, LayoutDashboard, LayoutList, LogOut } from 'lucide-react';
 
 export default function AdminPage() {
@@ -40,20 +41,17 @@ export default function AdminPage() {
   const fetchAllData = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('token');
-      const headers = { Authorization: `Bearer ${token}` };
-      
       const [statsRes, usersRes, paymentsRes, plansRes] = await Promise.all([
-        fetch('http://localhost:5000/api/admin/users/stats', { headers }),
-        fetch('http://localhost:5000/api/admin/users', { headers }),
-        fetch('http://localhost:5000/api/admin/payments', { headers }),
-        fetch('http://localhost:5000/api/admin/plans', { headers })
+        adminApi.getStats(),
+        adminApi.getUsers(),
+        adminApi.getPayments(),
+        adminApi.getPlans()
       ]);
       
-      if (statsRes.ok) setStats(await statsRes.json());
-      if (usersRes.ok) setUsersList((await usersRes.json()).users);
-      if (paymentsRes.ok) setPayments((await paymentsRes.json()).payments);
-      if (plansRes.ok) setPlans((await plansRes.json()).plans);
+      setStats(statsRes.data);
+      setUsersList(usersRes.data.users);
+      setPayments(paymentsRes.data.payments);
+      setPlans(plansRes.data.plans);
     } catch (error) {
       console.error('Failed to fetch admin data', error);
     } finally {
@@ -64,17 +62,12 @@ export default function AdminPage() {
   const handleCreatePlan = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const token = localStorage.getItem('token');
       const payload = {
         ...newPlan,
         features: newPlan.featuresString.split(',').map(s => s.trim()).filter(Boolean)
       };
-      const res = await fetch('http://localhost:5000/api/admin/plans', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify(payload)
-      });
-      if (res.ok) {
+      const res = await adminApi.createPlan(payload);
+      if (res.data) {
         setNewPlan({ name: '', description: '', price: 0, currency: 'INR', duration_days: 30, chat_limit: 100, featuresString: '' });
         fetchAllData(); // Refresh to get the new plan
       }

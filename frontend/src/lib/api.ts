@@ -81,6 +81,24 @@ export const chatApi = {
     api.post('/chat/regenerate', { conversation_id }),
   findTechnicians: (issue_type: string, location?: { lat: number; lng: number }) =>
     api.post('/chat/technicians', { issue_type, location }),
+// ── Payments ────────────────────────────────────────────────────────────
+export const paymentsApi = {
+  getPlans: () => api.get('/payments/plans'),
+  getMyPlan: () => api.get('/payments/my-plan'),
+  createOrder: (planId: string, provider: string) =>
+    api.post('/create-order', { planId, provider }),
+  verifyStripe: (sessionId: string, planId: string) =>
+    api.post('/payments/verify-stripe', { session_id: sessionId, plan_id: planId }),
+  verifyRazorpay: (data: any) => api.post('/payments/verify-razorpay', data),
+};
+
+// ── Admin ───────────────────────────────────────────────────────────────
+export const adminApi = {
+  getStats: () => api.get('/admin/users/stats'),
+  getUsers: () => api.get('/admin/users'),
+  getPayments: () => api.get('/admin/payments'),
+  getPlans: () => api.get('/admin/plans'),
+  createPlan: (data: any) => api.post('/admin/plans', data),
 };
 
 export default api;

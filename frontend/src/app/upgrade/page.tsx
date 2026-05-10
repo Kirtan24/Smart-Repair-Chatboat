@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useAuthStore } from '@/store/authStore';
 import { useChatStore } from '@/store/chatStore';
 import { useRouter } from 'next/navigation';
+import { paymentsApi } from '@/lib/api';
 import Script from 'next/script';
 import Sidebar from '@/components/Sidebar';
 import { Wrench, CheckCircle } from 'lucide-react';
@@ -30,23 +31,16 @@ export default function UpgradePage() {
 
   const fetchData = async () => {
     try {
-      const token = localStorage.getItem('token');
       const [plansRes, myPlanRes] = await Promise.all([
-        fetch('http://localhost:5000/api/payments/plans', {
-          headers: { Authorization: `Bearer ${token}` }
-        }),
-        fetch('http://localhost:5000/api/payments/my-plan', {
-          headers: { Authorization: `Bearer ${token}` }
-        })
+        paymentsApi.getPlans(),
+        paymentsApi.getMyPlan()
       ]);
       
-      if (plansRes.ok) {
-        const data = await plansRes.json();
-        setPlans(data.plans);
+      if (plansRes.data.plans) {
+        setPlans(plansRes.data.plans);
       }
-      if (myPlanRes.ok) {
-        const data = await myPlanRes.json();
-        if (data.plan) setCurrentPlan(data.plan);
+      if (myPlanRes.data.plan) {
+        setCurrentPlan(myPlanRes.data.plan);
       }
     } catch (error) {
       console.error('Failed to fetch data', error);
@@ -64,17 +58,8 @@ export default function UpgradePage() {
   const initiatePayment = async (provider: 'stripe' | 'razorpay') => {
     setProcessing(true);
     try {
-      const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:5000/api/payments/create-order', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({ planId: selectedPlan._id, provider })
-      });
-      
-      const data = await res.json();
+      const res = await paymentsApi.createOrder(selectedPlan._id, provider);
+      const data = res.data;
       
       if (provider === 'stripe' && data.url) {
         window.location.href = data.url;
@@ -87,20 +72,13 @@ export default function UpgradePage() {
           description: `Upgrade to ${selectedPlan.name}`,
           order_id: data.orderId,
           handler: async function (response: any) {
-            const verifyRes = await fetch('http://localhost:5000/api/payments/verify-razorpay', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`
-              },
-              body: JSON.stringify({
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature: response.razorpay_signature,
-                plan_id: selectedPlan._id
-              })
+            const verifyRes = await paymentsApi.verifyRazorpay({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              plan_id: selectedPlan._id
             });
-            if (verifyRes.ok) {
+            if (verifyRes.data.success) {
               router.push('/payment/success');
             } else {
               router.push('/payment/cancel');

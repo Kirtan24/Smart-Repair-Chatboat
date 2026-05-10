@@ -5,7 +5,7 @@ import { Plus, Trash2, MessageSquare, LogOut, ChevronDown, MoreHorizontal, Snowf
 import { format, isToday, isYesterday } from 'date-fns';
 import { useChatStore, type Conversation } from '@/store/chatStore';
 import { useAuthStore } from '@/store/authStore';
-import { conversationsApi } from '@/lib/api';
+import { conversationsApi, paymentsApi } from '@/lib/api';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 
@@ -68,21 +68,15 @@ export default function Sidebar({ onNewChat, onSelectConv }: Props) {
   useEffect(() => {
     const fetchPlan = async () => {
       try {
-        const token = localStorage.getItem('token');
-        if (!token) return;
-        const res = await fetch('http://localhost:5000/api/payments/my-plan', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        if (res.ok) {
-          const data = await res.json();
-          if (data.plan) setPlanData(data);
-        }
-      } catch (err) {
-        console.error('Failed to fetch plan', err);
+        if (!user) return;
+        const res = await paymentsApi.getMyPlan();
+        if (res.data) setPlanData(res.data);
+      } catch (error) {
+        console.error('Failed to fetch plan', error);
       }
     };
     fetchPlan();
-  }, []);
+  }, [user]);
 
   // Close menu on outside click
   useEffect(() => {
