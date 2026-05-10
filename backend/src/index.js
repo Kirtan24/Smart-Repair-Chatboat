@@ -15,22 +15,32 @@ app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 const allowedOrigins = [
   'http://localhost:3000',
   'http://127.0.0.1:3000',
-  process.env.FRONTEND_URL
+  'https://smart-repair-chatboat.vercel.app',
+  ...(process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(',').map(o => o.trim()) : [])
 ].filter(Boolean);
 
 app.use(cors({
   origin: (origin, callback) => {
     // Allow requests with no origin (like mobile apps or curl)
     if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) !== -1 || allowedOrigins.includes(origin)) {
+    
+    const isAllowed = allowedOrigins.some(allowed => {
+      // Direct match or wildcard match for subdomains if needed
+      return allowed === origin || allowed.replace(/\/$/, '') === origin.replace(/\/$/, '');
+    });
+
+    if (isAllowed) {
       callback(null, true);
     } else {
-      callback(new Error('Not allowed by CORS'));
+      console.warn(`[CORS] Blocked request from origin: ${origin}`);
+      // Returning null, false instead of an Error to avoid crashing the response before headers are set
+      callback(null, false);
     }
   },
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
+  optionsSuccessStatus: 200 // Some legacy browsers choke on 204
 }));
 app.use(cookieParser());
 
