@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { adminApi } from '@/lib/api';
 import { Wrench, Users, CreditCard, LayoutDashboard, LayoutList, LogOut } from 'lucide-react';
+import { Skeleton } from '@/components/Skeleton';
 
 export default function AdminPage() {
   const { user, isLoaded, logout } = useAuthStore();
@@ -87,8 +88,8 @@ export default function AdminPage() {
         display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.25rem',
         borderRadius: 'var(--radius-lg)', fontWeight: 600, fontSize: '0.9rem',
         transition: 'all 0.2s', border: 'none', cursor: 'pointer',
-        background: activeTab === id ? 'var(--orange-50)' : 'transparent',
-        color: activeTab === id ? 'var(--orange-600)' : 'var(--text-secondary)'
+        background: activeTab === id ? 'var(--brand-50)' : 'transparent',
+        color: activeTab === id ? 'var(--brand-600)' : 'var(--text-secondary)'
       }}
     >
       <Icon size={18} />
@@ -102,12 +103,12 @@ export default function AdminPage() {
       <nav style={{ background: 'var(--bg-primary)', borderBottom: '1px solid var(--border)', padding: '1rem 2rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 10 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '3rem' }}>
           <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', textDecoration: 'none' }}>
-            <div style={{ width: '2.5rem', height: '2.5rem', background: 'linear-gradient(135deg, var(--orange-500), var(--orange-600))', borderRadius: 'var(--radius-lg)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', boxShadow: '0 2px 8px rgba(249, 115, 22, 0.15)' }}>
+            <div className="sidebar-logo-icon" style={{ width: '2.5rem', height: '2.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'black' }}>
               <Wrench size={20} strokeWidth={1.5} />
             </div>
             <div>
               <div style={{ fontFamily: 'Outfit', fontWeight: 700, fontSize: '1.1rem', color: 'var(--text-primary)' }}>Admin Panel</div>
-              <div style={{ fontSize: '0.65rem', fontWeight: 600, color: 'var(--orange-500)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Smart Repair</div>
+              <div style={{ fontSize: '0.65rem', fontWeight: 600, color: 'var(--brand-500)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Smart Repair</div>
             </div>
           </Link>
           
@@ -138,7 +139,15 @@ export default function AdminPage() {
       {/* Main Content */}
       <main style={{ flex: 1, padding: '3rem 2rem', maxWidth: '1400px', margin: '0 auto', width: '100%' }}>
         {loading ? (
-          <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '4rem' }}>Loading data...</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+            <Skeleton width="200px" height={40} />
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
+              <Skeleton height={160} borderRadius="var(--radius-xl)" />
+              <Skeleton height={160} borderRadius="var(--radius-xl)" />
+              <Skeleton height={160} borderRadius="var(--radius-xl)" />
+            </div>
+            <Skeleton height={400} borderRadius="var(--radius-xl)" />
+          </div>
         ) : (
           <>
             {/* DASHBOARD TAB */}
@@ -146,15 +155,15 @@ export default function AdminPage() {
               <div className="animate-in fade-in duration-300">
                 <h1 style={{ fontSize: '2rem', fontWeight: 800, marginBottom: '2rem', color: 'var(--text-primary)' }}>Overview</h1>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
-                  <div style={{ background: 'var(--bg-primary)', padding: '2rem', borderRadius: 'var(--radius-xl)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-sm)' }}>
+                  <div className="glass-card" style={{ padding: '2rem', borderRadius: 'var(--radius-xl)' }}>
                     <h3 style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', fontWeight: 600, textTransform: 'uppercase', marginBottom: '0.5rem' }}>Total Users</h3>
                     <p style={{ fontSize: '3rem', fontWeight: 800, color: 'var(--text-primary)' }}>{stats.totalUsers}</p>
                   </div>
-                  <div style={{ background: 'var(--bg-primary)', padding: '2rem', borderRadius: 'var(--radius-xl)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-sm)' }}>
+                  <div className="glass-card" style={{ padding: '2rem', borderRadius: 'var(--radius-xl)' }}>
                     <h3 style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', fontWeight: 600, textTransform: 'uppercase', marginBottom: '0.5rem' }}>Paid Users</h3>
                     <p style={{ fontSize: '3rem', fontWeight: 800, color: 'var(--orange-600)' }}>{stats.paidUsers}</p>
                   </div>
-                  <div style={{ background: 'var(--bg-primary)', padding: '2rem', borderRadius: 'var(--radius-xl)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-sm)' }}>
+                  <div className="glass-card" style={{ padding: '2rem', borderRadius: 'var(--radius-xl)' }}>
                     <h3 style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', fontWeight: 600, textTransform: 'uppercase', marginBottom: '0.5rem' }}>Free Users</h3>
                     <p style={{ fontSize: '3rem', fontWeight: 800, color: '#3b82f6' }}>{stats.freeUsers}</p>
                   </div>
@@ -296,7 +305,7 @@ export default function AdminPage() {
                             style={{ width: '100%', padding: '0.75rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', background: 'var(--bg-secondary)', outline: 'none' }} />
                         </div>
                       </div>
-                      <button type="submit" style={{ marginTop: '1rem', width: '100%', padding: '0.875rem', background: 'linear-gradient(135deg, var(--orange-500), var(--orange-600))', color: 'white', fontWeight: 600, border: 'none', borderRadius: 'var(--radius-lg)', cursor: 'pointer', boxShadow: 'var(--shadow-orange)' }}>
+                      <button type="submit" style={{ marginTop: '1rem', width: '100%', padding: '0.875rem', background: 'var(--gradient-brand)', color: 'white', fontWeight: 600, border: 'none', borderRadius: 'var(--radius-lg)', cursor: 'pointer', boxShadow: 'var(--shadow-orange)' }}>
                         Create Premium Plan
                       </button>
                     </form>

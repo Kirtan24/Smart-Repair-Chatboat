@@ -5,7 +5,7 @@ import { Send, Mic, X, Image, HelpCircle } from 'lucide-react';
 import VoiceRecorder from './VoiceRecorder';
 
 interface Props {
-  onSend: (content: string, image?: File, audioBlob?: Blob, audioMime?: string) => void;
+  onSend: (content: string, images?: File[], audioBlob?: Blob, audioMime?: string) => void;
   disabled?: boolean;
   onShowShortcuts?: () => void;
 }
@@ -14,9 +14,9 @@ export default forwardRef<HTMLTextAreaElement, Props>(function ChatInput(
   { onSend, disabled, onShowShortcuts },
   ref
 ) {
-  const [text, setText]               = useState('');
-  const [image, setImage]             = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [text, setText]                 = useState('');
+  const [images, setImages]             = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<{ id: string, url: string, name: string }[]>([]);
   const [showVoice, setShowVoice]     = useState(false);
   const [isDragging, setIsDragging]   = useState(false);
 
@@ -33,24 +33,35 @@ export default forwardRef<HTMLTextAreaElement, Props>(function ChatInput(
     ta.style.height = Math.min(ta.scrollHeight, 120) + 'px';
   }, [text]);
 
-  const applyImageFile = (file: File) => {
-    if (!file.type.startsWith('image/')) return;
-    if (file.size > 20 * 1024 * 1024) {
-      alert('Image must be under 20MB');
-      return;
+  const applyFiles = (files: File[]) => {
+    const validImages = files.filter(f => f.type.startsWith('image/'));
+    const oversized = validImages.filter(f => f.size > 20 * 1024 * 1024);
+    
+    if (oversized.length > 0) {
+      alert(`Some images are over 20MB: ${oversized.map(f => f.name).join(', ')}`);
     }
-    setImage(file);
-    const reader = new FileReader();
-    reader.onload = () => setImagePreview(reader.result as string);
-    reader.readAsDataURL(file);
+
+    const newFiles = validImages.filter(f => f.size <= 20 * 1024 * 1024);
+    if (newFiles.length === 0) return;
+
+    setImages(prev => [...prev, ...newFiles]);
+
+    newFiles.forEach(file => {
+      const reader = new FileReader();
+      const id = Math.random().toString(36).substr(2, 9);
+      reader.onload = () => {
+        setImagePreviews(prev => [...prev, { id, url: reader.result as string, name: file.name }]);
+      };
+      reader.readAsDataURL(file);
+    });
   };
 
   const handleSend = () => {
-    if ((!text.trim() && !image) || disabled) return;
-    onSend(text.trim(), image ?? undefined);
+    if ((!text.trim() && images.length === 0) || disabled) return;
+    onSend(text.trim(), images.length > 0 ? images : undefined);
     setText('');
-    setImage(null);
-    setImagePreview(null);
+    setImages([]);
+    setImagePreviews([]);
     if (textareaRef.current) textareaRef.current.style.height = 'auto';
   };
 
@@ -64,11 +75,15 @@ export default forwardRef<HTMLTextAreaElement, Props>(function ChatInput(
   // ── Paste: Ctrl+V image ────────────────────────────────────────────────────
   const handlePaste = (e: React.ClipboardEvent) => {
     const items = Array.from(e.clipboardData.items);
-    const imgItem = items.find((i) => i.type.startsWith('image/'));
-    if (!imgItem) return;
-    e.preventDefault();
-    const file = imgItem.getAsFile();
-    if (file) applyImageFile(file);
+    const imgFiles = items
+      .filter(i => i.type.startsWith('image/'))
+      .map(i => i.getAsFile())
+      .filter((f): f is File => f !== null);
+
+    if (imgFiles.length > 0) {
+      e.preventDefault();
+      applyFiles(imgFiles);
+    }
   };
 
   // ── Drag & Drop ────────────────────────────────────────────────────────────
@@ -87,14 +102,14 @@ export default forwardRef<HTMLTextAreaElement, Props>(function ChatInput(
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
-    const file = e.dataTransfer.files[0];
-    if (file) applyImageFile(file);
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length > 0) applyFiles(files);
   };
 
   // ── File picker ────────────────────────────────────────────────────────────
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) applyImageFile(file);
+    const files = Array.from(e.target.files || []);
+    if (files.length > 0) applyFiles(files);
     e.target.value = '';
   };
 
@@ -103,12 +118,12 @@ export default forwardRef<HTMLTextAreaElement, Props>(function ChatInput(
     onSend('', undefined, blob, mimeType);
   };
 
-  const removeImage = () => {
-    setImage(null);
-    setImagePreview(null);
+  const removeImage = (index: number) => {
+    setImages(prev => prev.filter((_, i) => i !== index));
+    setImagePreviews(prev => prev.filter((_, i) => i !== index));
   };
 
-  const canSend = (text.trim().length > 0 || !!image) && !disabled;
+  const canSend = (text.trim().length > 0 || images.length > 0) && !disabled;
 
   return (
     <>
@@ -133,14 +148,18 @@ export default forwardRef<HTMLTextAreaElement, Props>(function ChatInput(
           </div>
         )}
 
-        {/* Image preview */}
-        {imagePreview && image && (
-          <div className="image-preview-bar">
-            <img src={imagePreview} alt="preview" className="image-preview-thumb" />
-            <span className="image-preview-name">{image.name || 'Pasted image'}</span>
-            <button className="image-preview-remove" onClick={removeImage} title="Remove image">
-              <X size={14} />
-            </button>
+        {/* Image previews */}
+        {imagePreviews.length > 0 && (
+          <div className="image-preview-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.75rem' }}>
+            {imagePreviews.map((prev, idx) => (
+              <div key={prev.id} className="image-preview-bar" style={{ margin: 0, padding: '0.375rem 0.5rem', flex: '0 0 auto' }}>
+                <img src={prev.url} alt="preview" className="image-preview-thumb" style={{ width: '1.5rem', height: '1.5rem' }} />
+                <span className="image-preview-name" style={{ maxWidth: '80px' }}>{prev.name}</span>
+                <button className="image-preview-remove" onClick={() => removeImage(idx)} title="Remove image">
+                  <X size={12} />
+                </button>
+              </div>
+            ))}
           </div>
         )}
 
@@ -152,6 +171,7 @@ export default forwardRef<HTMLTextAreaElement, Props>(function ChatInput(
             accept="image/jpeg,image/png,image/webp"
             style={{ display: 'none' }}
             onChange={handleImageSelect}
+            multiple
             id="image-upload-input"
           />
           <button

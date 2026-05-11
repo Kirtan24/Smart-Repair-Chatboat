@@ -13,6 +13,7 @@ import KeyboardShortcuts from '@/components/KeyboardShortcuts';
 import { useAuthStore } from '@/store/authStore';
 import { useChatStore, type Message } from '@/store/chatStore';
 import { chatApi, conversationsApi } from '@/lib/api';
+import { ChatSkeleton, Skeleton } from '@/components/Skeleton';
 
 const QUICK_ACTIONS = [
   { icon: Snowflake, title: 'AC Problem',         desc: 'Not cooling, leaking, noise',   prompt: 'My AC is not cooling properly and it seems to be leaking water' },
@@ -114,7 +115,7 @@ export default function ChatPage() {
   // ── Send message ────────────────────────────────────────────────────────
   const handleSend = useCallback(async (
     content: string,
-    image?: File,
+    images?: File[],
     audioBlob?: Blob,
     audioMime?: string,
   ) => {
@@ -128,9 +129,9 @@ export default function ChatPage() {
     const userMsg: Message = {
       id: tempId,
       role: 'user',
-      content: content || (image ? '[Image uploaded]' : '[Voice message]'),
-      image_url: image ? URL.createObjectURL(image) : undefined,
-      input_type: audioBlob ? 'voice' : image ? 'image' : 'text',
+      content: content || (images?.length ? `[${images.length} Image(s) uploaded]` : '[Voice message]'),
+      image_url: images && images.length > 0 ? URL.createObjectURL(images[0]) : undefined,
+      input_type: audioBlob ? 'voice' : (images?.length ? 'image' : 'text'),
       created_at: new Date().toISOString(),
     };
     addMessage(userMsg);
@@ -164,8 +165,8 @@ export default function ChatPage() {
         console.warn('Geolocation unavailable or timed out:', geoErr);
       }
 
-      if (image) {
-        fd.append('image', image);
+      if (images && images.length > 0) {
+        images.forEach(img => fd.append('images', img));
         fd.append('input_type', 'image');
       } else if (audioBlob) {
         const ext = audioMime?.includes('webm') ? 'webm' : 'ogg';
@@ -262,8 +263,8 @@ export default function ChatPage() {
         <main className="chat-main">
 
           {/* Header */}
-          <div className="chat-header">
-            <div style={{ width: '2.25rem', height: '2.25rem', background: 'linear-gradient(135deg, var(--orange-500), var(--orange-600))', borderRadius: 'var(--radius-lg)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', flexShrink: 0, boxShadow: '0 2px 8px rgba(249, 115, 22, 0.15)' }}>
+          <div className="chat-header" style={{ background: 'linear-gradient(135deg, var(--brand-50), var(--white))' }}>
+            <div className="sidebar-logo-icon" style={{ width: '2.25rem', height: '2.25rem', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'black', flexShrink: 0 }}>
               <Wrench size={20} strokeWidth={1.5} />
             </div>
             <div className="chat-header-title">
@@ -288,10 +289,10 @@ export default function ChatPage() {
           {showWelcome ? (
             <div className="messages-area">
               <div className="welcome-screen">
-                <div className="welcome-icon">
+                <div className="welcome-icon" style={{ color: 'black' }}>
                   <Wrench size={56} strokeWidth={1.5} />
                 </div>
-                <h1 className="welcome-title">Smart Repair Assistant</h1>
+                <h1 className="welcome-title" style={{ background: 'none', WebkitTextFillColor: 'var(--brand-500)', color: 'var(--brand-500)' }}>Smart Repair Assistant</h1>
                 <p className="welcome-subtitle">
                   Your AI-powered home technician. Describe any appliance issue via text, <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}>voice <Mic size={14} strokeWidth={1.5} /></span>, or <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}>photo <ImageIcon size={14} strokeWidth={1.5} /></span> — I'll diagnose it step-by-step and guide you to the fix or the right technician.
                 </p>
@@ -322,10 +323,7 @@ export default function ChatPage() {
           ) : (
             <div className="messages-area" id="messages-scroll-area">
               {isLoadingConv ? (
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, gap: '0.5rem', color: 'var(--text-muted)' }}>
-                  <RefreshCw size={18} style={{ animation: 'spin 0.8s linear infinite' }} />
-                  <span style={{ fontSize: '0.875rem' }}>Loading conversation…</span>
-                </div>
+                <ChatSkeleton />
               ) : (
                 <>
                   {displayMsgs.map((msg, idx) => {

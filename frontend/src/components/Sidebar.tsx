@@ -8,6 +8,7 @@ import { useAuthStore } from '@/store/authStore';
 import { conversationsApi, paymentsApi } from '@/lib/api';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
+import { SidebarSkeleton } from './Skeleton';
 
 const ISSUE_BADGE: Record<string, string> = {
   ac: 'badge-ac',
@@ -112,7 +113,7 @@ export default function Sidebar({ onNewChat, onSelectConv }: Props) {
       {/* Logo */}
       <div className="sidebar-header">
         <div className="sidebar-logo">
-          <div className="sidebar-logo-icon"><Wrench size={24} strokeWidth={1.5} /></div>
+          <div className="sidebar-logo-icon" style={{ background: 'var(--gradient-brand)', color: 'black' }}><Wrench size={20} strokeWidth={1.5} /></div>
           <div>
             <div className="sidebar-logo-text">Smart Repair</div>
             <div className="sidebar-logo-sub">AI Assistant</div>
@@ -128,7 +129,9 @@ export default function Sidebar({ onNewChat, onSelectConv }: Props) {
 
       {/* Conversation list */}
       <div className="sidebar-conversations">
-        {conversations.length === 0 ? (
+        {!user ? (
+          <SidebarSkeleton />
+        ) : conversations.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '2rem 1rem', color: 'var(--text-muted)' }}>
             <MessageSquare size={28} style={{ margin: '0 auto 0.5rem', opacity: 0.4 }} />
             <p style={{ fontSize: '0.8rem' }}>No conversations yet</p>
@@ -140,10 +143,10 @@ export default function Sidebar({ onNewChat, onSelectConv }: Props) {
               <div className="sidebar-section-label">{date}</div>
               {convs.map((conv) => (
                 <div
-                  key={`conv-${conv.id}`}
-                  className={`conv-item ${activeConversationId === conv.id ? 'active' : ''}`}
-                  onClick={() => onSelectConv(conv.id)}
-                  style={{ position: 'relative' }}
+                  key={`conv-${conv.id || (conv as any)._id}`}
+                  className={`conv-item ${activeConversationId === (conv.id || (conv as any)._id) ? 'glass-card active' : ''}`}
+                  onClick={() => onSelectConv(conv.id || (conv as any)._id)}
+                  style={{ position: 'relative', border: activeConversationId === (conv.id || (conv as any)._id) ? '1px solid var(--orange-300)' : undefined }}
                 >
                   <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.375rem' }}>
                     <span style={{ fontSize: '0.9rem', flexShrink: 0, marginTop: '0.05rem' }}>
@@ -165,16 +168,16 @@ export default function Sidebar({ onNewChat, onSelectConv }: Props) {
                       <button
                         className="icon-btn"
                         style={{ width: '1.5rem', height: '1.5rem', opacity: 0.6 }}
-                        onClick={(e) => { e.stopPropagation(); setOpenMenu(openMenu === conv.id ? null : conv.id); }}
+                        onClick={(e) => { e.stopPropagation(); setOpenMenu(openMenu === (conv.id || (conv as any)._id) ? null : (conv.id || (conv as any)._id)); }}
                         title="Options"
                       >
                         <MoreHorizontal size={14} />
                       </button>
-                      {openMenu === conv.id && (
+                      {openMenu === (conv.id || (conv as any)._id) && (
                         <div className="dropdown-menu">
                           <button
                             className="dropdown-item danger"
-                            onClick={(e) => handleDelete(e, conv.id)}
+                            onClick={(e) => handleDelete(e, conv.id || (conv as any)._id)}
                           >
                             <Trash2 size={13} /> Delete
                           </button>
@@ -192,7 +195,7 @@ export default function Sidebar({ onNewChat, onSelectConv }: Props) {
       {/* Links */}
       <div style={{ padding: '0 1rem 1rem' }}>
         {planData ? (
-          <div style={{ padding: '0.875rem', background: 'var(--orange-50)', borderRadius: 'var(--radius-lg)', marginBottom: user?.role === 'admin' ? '0.5rem' : 0, border: '1px solid var(--orange-200)' }}>
+          <div className="glass-card" style={{ padding: '0.875rem', borderRadius: 'var(--radius-lg)', marginBottom: user?.role === 'admin' ? '0.5rem' : 0, border: '1px solid var(--orange-200)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
               <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--orange-700)', textTransform: 'uppercase' }}>{planData.plan.name}</span>
               <Link href="/upgrade" style={{ fontSize: '0.7rem', color: 'var(--orange-600)', textDecoration: 'none', fontWeight: 600 }}>Manage</Link>
@@ -205,7 +208,7 @@ export default function Sidebar({ onNewChat, onSelectConv }: Props) {
             </div>
           </div>
         ) : (
-          <Link href="/upgrade" style={{ display: 'block', padding: '0.75rem', background: 'linear-gradient(135deg, var(--orange-500), var(--orange-600))', color: 'white', textDecoration: 'none', borderRadius: 'var(--radius-lg)', textAlign: 'center', fontWeight: 'bold', fontSize: '0.875rem', marginBottom: user?.role === 'admin' ? '0.5rem' : 0, boxShadow: 'var(--shadow-orange)' }}>
+          <Link href="/upgrade" style={{ display: 'block', padding: '0.75rem', background: 'var(--gradient-brand)', color: 'white', textDecoration: 'none', borderRadius: 'var(--radius-lg)', textAlign: 'center', fontWeight: 'bold', fontSize: '0.875rem', marginBottom: user?.role === 'admin' ? '0.5rem' : 0, boxShadow: 'var(--shadow-orange)' }}>
             Upgrade to Premium
           </Link>
         )}

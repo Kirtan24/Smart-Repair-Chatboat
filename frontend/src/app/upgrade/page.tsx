@@ -8,6 +8,7 @@ import { paymentsApi } from '@/lib/api';
 import Script from 'next/script';
 import Sidebar from '@/components/Sidebar';
 import { Wrench, CheckCircle } from 'lucide-react';
+import { PlanSkeleton } from '@/components/Skeleton';
 
 export default function UpgradePage() {
   const { user, isLoaded } = useAuthStore();
@@ -105,8 +106,15 @@ export default function UpgradePage() {
     return (
       <div className="app-layout">
         <Sidebar onNewChat={handleNewChat} onSelectConv={handleSelectConv} />
-        <main className="chat-main" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
-          Loading plans...
+        <main className="chat-main" style={{ padding: '2rem', background: 'var(--bg-secondary)', overflowY: 'auto' }}>
+           <div style={{ maxWidth: '1200px', margin: '4rem auto' }}>
+              <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
+                <div className="skeleton" style={{ width: '120px', height: '30px', borderRadius: 'var(--radius-full)', margin: '0 auto 1.5rem' }}></div>
+                <div className="skeleton" style={{ width: '60%', height: '50px', margin: '0 auto 1rem' }}></div>
+                <div className="skeleton" style={{ width: '40%', height: '24px', margin: '0 auto' }}></div>
+              </div>
+              <PlanSkeleton />
+           </div>
         </main>
       </div>
     );
@@ -121,8 +129,8 @@ export default function UpgradePage() {
       <Sidebar onNewChat={handleNewChat} onSelectConv={handleSelectConv} />
       
       <main className="chat-main" style={{ overflowY: 'auto', background: 'var(--bg-secondary)' }}>
-        <div className="chat-header">
-            <div style={{ width: '2.25rem', height: '2.25rem', background: 'linear-gradient(135deg, var(--orange-500), var(--orange-600))', borderRadius: 'var(--radius-lg)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', flexShrink: 0, boxShadow: '0 2px 8px rgba(249, 115, 22, 0.15)' }}>
+          <div className="chat-header">
+            <div className="sidebar-logo-icon" style={{ width: '2.25rem', height: '2.25rem', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'black', flexShrink: 0 }}>
               <Wrench size={20} strokeWidth={1.5} />
             </div>
             <div className="chat-header-title">
@@ -132,10 +140,10 @@ export default function UpgradePage() {
 
         <div style={{ padding: '4rem 2rem', maxWidth: '1200px', margin: '0 auto', width: '100%' }}>
           <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
-            <div style={{ display: 'inline-block', padding: '0.4rem 1rem', background: 'var(--orange-100)', color: 'var(--orange-700)', borderRadius: 'var(--radius-full)', fontSize: '0.8rem', fontWeight: 700, letterSpacing: '0.05em', marginBottom: '1.5rem', textTransform: 'uppercase' }}>
+            <div style={{ display: 'inline-block', padding: '0.4rem 1rem', background: 'var(--brand-100)', color: 'var(--brand-700)', borderRadius: 'var(--radius-full)', fontSize: '0.8rem', fontWeight: 700, letterSpacing: '0.05em', marginBottom: '1.5rem', textTransform: 'uppercase' }}>
               Pricing Plans
             </div>
-            <h1 className="welcome-title" style={{ fontSize: '3rem', marginBottom: '1rem', lineHeight: 1.2 }}>Unlock the power of <br/>Smart Repair Assistant</h1>
+            <h1 className="welcome-title" style={{ fontSize: '3.5rem', marginBottom: '1rem', lineHeight: 1.1, background: 'none', WebkitTextFillColor: 'var(--brand-500)', color: 'var(--brand-500)' }}>Unlock the power of <br/>Smart Repair Assistant</h1>
             <p className="welcome-subtitle" style={{ margin: '0 auto', fontSize: '1.125rem', color: 'var(--text-secondary)', maxWidth: '600px' }}>
               Choose a plan that fits your needs. Get priority responses, higher limits, and advanced context retention.
             </p>
@@ -147,22 +155,20 @@ export default function UpgradePage() {
               const isHighlighted = index === middlePlanIndex;
               
               return (
-                <div key={plan._id} style={{
-                  background: 'var(--bg-primary)',
-                  border: isHighlighted ? '2px solid var(--orange-400)' : '1px solid var(--border)',
+                <div key={plan._id} className="glass-card" style={{
                   borderRadius: '1.5rem',
                   padding: isHighlighted ? '3rem 2rem' : '2.5rem 2rem',
-                  boxShadow: isHighlighted ? '0 20px 40px -15px rgba(249, 115, 22, 0.2)' : 'var(--shadow-sm)',
                   display: 'flex',
                   flexDirection: 'column',
                   position: 'relative',
                   transform: isHighlighted ? 'scale(1.02)' : 'scale(1)',
                   zIndex: isHighlighted ? 10 : 1,
-                  transition: 'transform 0.3s ease',
+                  border: isHighlighted ? '2px solid var(--orange-400)' : undefined,
+                  boxShadow: isHighlighted ? '0 20px 40px -15px rgba(249, 115, 22, 0.2)' : undefined,
                 }}>
                   
                   {isHighlighted && (
-                    <div style={{ position: 'absolute', top: '-14px', left: '50%', transform: 'translateX(-50%)', background: 'linear-gradient(135deg, var(--orange-500), var(--orange-600))', color: 'white', padding: '0.25rem 1rem', borderRadius: 'var(--radius-full)', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', boxShadow: '0 4px 10px rgba(249, 115, 22, 0.3)' }}>
+                    <div style={{ position: 'absolute', top: '-14px', left: '50%', transform: 'translateX(-50%)', background: 'var(--gradient-brand)', color: 'white', padding: '0.35rem 1.25rem', borderRadius: 'var(--radius-full)', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.05em', textTransform: 'uppercase', boxShadow: '0 4px 15px rgba(249, 115, 22, 0.25)' }}>
                       Most Popular
                     </div>
                   )}
@@ -214,14 +220,14 @@ export default function UpgradePage() {
                       width: '100%',
                       padding: '1.125rem',
                       borderRadius: 'var(--radius-xl)',
-                      background: isCurrentPlan ? 'var(--gray-200)' : (isHighlighted ? 'linear-gradient(135deg, var(--orange-500), var(--orange-600))' : 'var(--bg-primary)'),
+                      background: isCurrentPlan ? 'var(--gray-200)' : (isHighlighted ? 'var(--gradient-brand)' : 'var(--bg-primary)'),
                       color: isCurrentPlan ? 'var(--text-muted)' : (isHighlighted ? 'white' : 'var(--text-primary)'),
                       fontWeight: 700,
                       fontSize: '1rem',
                       border: isCurrentPlan ? '1px solid var(--gray-300)' : (isHighlighted ? 'none' : '1px solid var(--border)'),
                       cursor: isCurrentPlan ? 'default' : 'pointer',
-                      transition: 'all 0.2s',
-                      boxShadow: (!isCurrentPlan && isHighlighted) ? '0 4px 14px 0 rgba(249, 115, 22, 0.3)' : 'none'
+                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                      boxShadow: (!isCurrentPlan && isHighlighted) ? 'var(--shadow-orange)' : 'none'
                     }}
                     onMouseOver={(e) => {
                       if (!isCurrentPlan) {

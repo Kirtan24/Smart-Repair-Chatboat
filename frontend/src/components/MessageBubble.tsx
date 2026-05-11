@@ -53,7 +53,7 @@ export default function MessageBubble({ message, userInitial, onEdit, onRegenera
         )}
 
         {/* Bubble */}
-        <div className={`message-bubble ${isUser ? 'user-bubble' : 'assistant-bubble'}`}>
+        <div className={`message-bubble ${isUser ? 'user-bubble' : 'assistant-bubble glass-card'}`}>
           {isUser ? (
             <span style={{ whiteSpace: 'pre-wrap' }}>{message.content}</span>
           ) : (
